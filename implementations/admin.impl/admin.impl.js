@@ -1,20 +1,58 @@
 const UserModel = require('../../models/user.model/user.model');
 const WorkerModel = require('../../models/worker.model/worker.model');
-const WorkerOrderModel = require('../../models/worker.order.model/worker.order.model');
 const BaseImpl = require('../base.impl/base.impl');
+const OrderImpl = require('../order.impl/order.impl');
+const WorkerImpl = require('../worker.impl/worker.impl');
+const BaseImplConstants = require("../base.impl/base.impl.constants");
 
 class AdminImpl extends BaseImpl {
     constructor(options) {
         super(options);
+        this.workerImpl = new WorkerImpl(options);
+        this.orderImpl = new OrderImpl(options);
+    };
+
+    _isSuperAdmin(){
+        // this method would return result for single object!
+        return new Promise((resolve, reject) => {
+           this._listAllAdmins().then((result) => {
+               resolve(result[0]?.userRole === 'superAdmin');
+           }).catch((err) => {
+              reject(err);
+           });
+        });
     };
 
     _createNewAdmin(){
         return new Promise((resolve, reject) => {
-            this.addNewModel({model: UserModel}).then((newlyCreatedModel) => {
-                resolve(newlyCreatedModel);
-            }).catch((err) => {
-                reject(err);
-            })
+
+            const self = this;
+
+            function createNewAdmin(){
+                self.addNewModel({model: UserModel}).then((newlyCreatedModel) => {
+                    resolve(newlyCreatedModel);
+                }).catch((err) => {
+                    reject(err);
+                })
+            }
+
+            if(this.options.selectedNodes){
+                this._isSuperAdmin().then((isSuperAdmin) => {
+                    if(isSuperAdmin){
+                        createNewAdmin()
+                    } else {
+                        resolve({notCreated: true, message: BaseImplConstants.modelCreateError.superAdminNeeded})
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+            } else {
+                if(this.options.userRole === 'superAdmin'){
+                    createNewAdmin();
+                } else {
+                    resolve({notCreated: true, message: BaseImplConstants.modelCreateError.superAdminNeeded})
+                }
+            }
         });
     };
 
@@ -31,25 +69,40 @@ class AdminImpl extends BaseImpl {
 
     _createNewWorker(){
         return new Promise((resolve, reject) => {
-            this.addNewModel({model: WorkerModel}).then((newlyCreatedWorkerModel) => {
-                this.pushIntoParentModel({parentModelFindKey: {_id: this.options.adminId}, parentModel: UserModel, model: newlyCreatedWorkerModel, parentKey: 'workers'}).then(() => {
-                    resolve(newlyCreatedWorkerModel);
+            if(this.options.adminId){
+                this.workerImpl._createNewWorker().then((newlyCreatedWorkerModel) => {
+                    this.pushIntoParentModel({parentModelFindKey: {_id: this.options.adminId}, parentModel: UserModel, model: newlyCreatedWorkerModel, parentKey: 'workers'}).then(() => {
+                        resolve(newlyCreatedWorkerModel);
+                    }).catch((err) => {
+                        reject(err);
+                    });
                 }).catch((err) => {
                     reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            })
+                })
+            } else {
+                resolve({notCreated: true, message: BaseImplConstants.modelCreateError.missingAdminId});
+            }
         });
     };
 
     _createNewOrder(){
         return new Promise((resolve, reject) => {
-            this.addNewModel({model: WorkerOrderModel}).then((newlyCreatedOrderModel) => {
-                this.pushIntoParentModel({parentModelFindKey: {_id: this.options.workerPartner}, parentModel: WorkerModel, model: newlyCreatedOrderModel, parentKey: 'orders'}).then(() => {
-                    resolve(newlyCreatedOrderModel);
+            this.orderImpl._createNewOrder().then((newlyCreatedOrderModel) => {
+                const additionalQuery = {};
+                additionalQuery['_id'] = this.options.workerPartner;
+                this.getAllModels({model: WorkerModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery}).then((result) => {
+                    this.options.selectedNodes = JSON.stringify(this.options.workerPartner);
+                    this.updateExistingModel({model: WorkerModel, body: {userPendingOrder: (result[0]?.userPendingOrder || 0) + 1}}).then(() => {
+                        this.pushIntoParentModel({parentModelFindKey: {_id: this.options.workerPartner}, parentModel: WorkerModel, model: newlyCreatedOrderModel, parentKey: 'orders'}).then(() => {
+                            resolve(newlyCreatedOrderModel);
+                        }).catch((err) => {
+                            reject(err);
+                        });
+                    }).catch((err) => {
+                       reject(err);
+                    });
                 }).catch((err) => {
-                   reject(err);
+                    reject(err);
                 });
             }).catch((err) => {
                 reject(err);
@@ -57,9 +110,10 @@ class AdminImpl extends BaseImpl {
         });
     };
 
-    _listAllAdmins(){
+    _listAllAdmins(additionalQuery){
+        additionalQuery = additionalQuery || {};
         return new Promise((resolve, reject) => {
-            this.getAllModels({model: UserModel, filterQuery: () => this.prepareFilterQuery({})})
+            this.getAllModels({model: UserModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
                 .then((result) => {
                 resolve(result);
             }).catch((err) => {
@@ -78,8 +132,7 @@ class AdminImpl extends BaseImpl {
             additionalQuery['_id'] = this.options.workerId;
         }
         return new Promise((resolve, reject) => {
-           this.getAllModels({model: WorkerModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
-               .then((result) => {
+           this.workerImpl._listWorkers(additionalQuery).then((result) => {
                 resolve(result);
            }).catch((err) => {
                reject(err);
@@ -87,7 +140,7 @@ class AdminImpl extends BaseImpl {
         });
     };
 
-    _listAllOrders(){
+    async _listAllOrders(){
        const additionalQuery = {};
        if(this.options.adminId){
            additionalQuery['adminId'] = this.options.adminId;
@@ -95,14 +148,51 @@ class AdminImpl extends BaseImpl {
        if(this.options.workerId){
            additionalQuery['workerPartner'] = this.options.workerId;
        }
-       return new Promise((resolve, reject) => {
-          this.getAllModels({model: WorkerOrderModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
-              .then((result) => {
-                  resolve(result);
-              }).catch((err) => {
-                  reject(err);
-          });
-       });
+       await this.orderImpl._listOrders(additionalQuery);
+    };
+
+    async _deleteOrder(){
+        await this.orderImpl._deleteOrder();
+    };
+
+    _deleteNonSuperAdmin(){
+        return new Promise((resolve, reject) => {
+           // Check if the selected node is super admin, if it's a super admin, restrict the account from being deleted.
+           this._isSuperAdmin().then((superAdmin) => {
+               if(!superAdmin){
+                   this.deleteModels({model: UserModel}).then((result) => {
+                       resolve(result);
+                   }).catch((err) => {
+                       reject(err);
+                   });
+               } else {
+                   resolve({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete});
+               }
+           }).catch((err) => {
+               reject({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete, err: err});
+           });
+        })
+    };
+
+    _deleteWorkers(){
+        return new Promise((resolve, reject) => {
+            const additionalQuery = {};
+            // Check if the worker has any unfinished business task, if yes, don't allow the worker model to be deleted!
+            if(this.options.selectedNodes){
+                additionalQuery['_id'] = this.options.selectedNodes;
+            }
+            this.workerImpl._isWorkerHasPendingTasks(additionalQuery).then((isWorkerHasPendingTasks) => {
+               if(!isWorkerHasPendingTasks){
+                   this.workerImpl._deleteWorker().then((result) => {
+                       resolve(result);
+                   }).catch((err) => {
+                       reject(err);
+                   });
+               } else {
+                   resolve({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete});
+               }
+            });
+        });
     };
 }
 

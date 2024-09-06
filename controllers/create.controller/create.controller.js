@@ -16,7 +16,7 @@ class CreateController extends BaseController {
                 this.responseHandler.parser(this.options.response, {statusCode: 400, message: result.message, success: false});
             }
         }).catch((error) => {
-            console.log(error);
+            console.log(error)
             this.responseHandler.parser(this.options.response, {statusCode: 500, message: error.message, success: false, err: error.err, controllerLang: lang});
         });
     };

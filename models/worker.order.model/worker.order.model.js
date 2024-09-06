@@ -6,6 +6,8 @@ const WorkerOrders = new Mongoose.Schema({
     orderPlaced: {type: String, required: true},
     orderDeadline: {type: String, required: true},
     isOrderCompleted: {type: Boolean, default: false},
+    isOrderAccepted: {type: Boolean, default: false},
+    orderPrice: {type: Number, required: true}, // This has to be reduced in worker model userBalance
     workerPartner: {
         type: Mongoose.Schema.Types.ObjectId,
         ref: 'Workers',

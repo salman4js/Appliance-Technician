@@ -5,8 +5,9 @@ const WorkerModel = new Mongoose.Schema({
     password: {type: String, required: true},
     userRole: {type: String, required: true}, // worker
     userBalance: {type: Number, required: true},
-    userOrderCompletion: {type: Number},
-    userPendingOrder: {type: Number},
+    userOrderCompletion: {type: Number, default: 0},
+    userPendingOrder: {type: Number, default: 0},
+    userAcceptedPendingOrder: {type: Number, default: 0},
     orders: [{
         type: Mongoose.Schema.Types.ObjectId,
         ref: 'WorkerOrders'

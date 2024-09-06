@@ -44,8 +44,9 @@ class BaseImpl {
 
     updateExistingModel(options){
         return new Promise((resolve, reject) => {
-            if(this.options?.selectedNodes && this.options?.selectedNodes.length > 0){
-                options.model.updateMany({_id: this.options.selectedNodes}, this.options, {new: true}).then((updatedModel) => {
+            const selectedNodes = JSON.parse(this.options.selectedNodes);
+            if(selectedNodes && selectedNodes.length > 0){
+                options.model.updateMany({_id: selectedNodes}, options.body || this.options, {new: true}).then((updatedModel) => {
                     resolve(updatedModel);
                 }).catch((err) => {
                     reject({nptUpdated: true, err: err, message: BaseImplConstants.modelGenericError})
@@ -71,6 +72,21 @@ class BaseImpl {
                 resolve(result);
             }).catch((err) => {
                 reject(err);
+            });
+        });
+    };
+
+    deleteModels(options){
+        return new Promise((resolve, reject) => {
+            const deleteFilter = {};
+            if(this.options.selectedNodes){
+                let selectedNodes = JSON.parse(this.options.selectedNodes).map(id => Mongoose.Types.ObjectId(id));
+                deleteFilter['_id'] = {$in: selectedNodes}
+            }
+            options.model.deleteMany(deleteFilter._id, {new: true}).then((result) => {
+                resolve(result)
+            }).catch((err) => {
+               reject({notDeleted: true, message: BaseImplConstants.modelGenericError, err: err});
             });
         });
     };

@@ -3,6 +3,7 @@ const Router = Express.Router();
 const CreateController = require('../controllers/create.controller/create.controller');
 const ReadController = require('../controllers/read.controller/read.controller');
 const EditController = require('../controllers/edit.controller/edit.controller');
+const DeleteController = require("../controllers/delete.controller/delete.controller");
 
 async function Initiator(options, method){
     var controller;
@@ -17,6 +18,10 @@ async function Initiator(options, method){
             break;
         case "PATCH":
             controller = new EditController(options);
+            await controller.doAction().catch(options.next);
+            break;
+        case "DELETE":
+            controller = new DeleteController(options);
             await controller.doAction().catch(options.next);
             break;
         default:
@@ -34,6 +39,10 @@ Router.get("/:repoName/get-admins-worker-info",
 Router.get("/:repoName/get-admins-orders-info",
     (req, res,next) => Initiator({req, res, next}, "GET"));
 
+// Worker read routes!
+Router.get("/:repoName/get-worker-orders",
+    (req, res, next) => Initiator({req, res, next}, "GET"));
+
 // Admin creation routes!
 Router.post("/:repoName/create-admin",
     (req, res, next) => Initiator({req, res, next}, "POST"));
@@ -47,5 +56,16 @@ Router.post("/:repoName/create-new-order",
 // Admin update routes!
 Router.patch("/:repoName/update-admin",
     (req, res, next) => Initiator({req, res, next}, "PATCH"));
+
+// Worker update routes!
+Router.patch("/:repoName/accept-worker-order",
+    (req, res, next) => Initiator({req, res, next}, "PATCH"));
+
+// Admin delete routes!
+Router.delete("/:repoName/admin-delete-order",
+    (req, res, next) => Initiator({req, res, next}, "DELETE"));
+
+Router.delete("/:repoName/admin-delete-non-admin",
+    (req, res, next) => Initiator({req, res, next}, "DELETE"));
 
 module.exports = Router;
