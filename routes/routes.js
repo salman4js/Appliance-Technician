@@ -67,6 +67,8 @@ Router.patch("/:repoName/update-admin",
 Router.patch("/:repoName/accept-worker-order",
     (req, res, next) => Initiator({req, res, next}, "PATCH"));
 
+Router.patch("/:repoName/update-worker", (req, res, next) => Initiator({req, res, next}, "PATCH"));
+
 // Admin delete routes!
 Router.delete("/:repoName/admin-delete-order",
     (req, res, next) => Initiator({req, res, next}, "DELETE"));

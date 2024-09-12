@@ -18,6 +18,7 @@ const ImplMapper = {
     },
     PATCH: {
         admin: (options) => new AdminImpl(options)._updateAdminDetails(),
+        worker: (options) => new WorkerImpl(options)._updateWorker(),
         order: (options) => new WorkerImpl(options)._updateWorkerOrder()
     },
     DELETE: {

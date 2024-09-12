@@ -21,6 +21,16 @@ class WorkerImpl extends BaseImpl {
         });
     };
 
+    _updateWorker(){
+        return new Promise((resolve, reject) => {
+            this.updateExistingModel({model: WorkerModel}).then((result) => {
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
+            })
+        });
+    };
+
     _isWorkerHasPendingTasks(additionalQuery) {
         additionalQuery = additionalQuery || {};
         return new Promise((resolve, reject) => {
@@ -62,6 +72,8 @@ class WorkerImpl extends BaseImpl {
                     this.orderImpl._listOrders(additionalQuery).then((orderModel) => {
                         if(workerModel[0].userBalance >= orderModel[0].orderPrice){
                             resolve({isWorkerHasBal: true});
+                        } else {
+                            resolve({isWorkerHasBal: false});
                         }
                     }).catch((err) => {
                         reject(err);
@@ -75,24 +87,36 @@ class WorkerImpl extends BaseImpl {
         });
     };
 
+    _updateWorkerTaskState(updatedOrderModel){
+        return new Promise((resolve, reject) => {
+            let additionalQuery = {}, patchBody;
+            additionalQuery['_id'] = this.options.workerPartner;
+            this._listWorkers(additionalQuery).then((result) => {
+                this.options.selectedNodes = JSON.stringify(this.options.workerPartner);
+                if(this.options.isOrderAccepted) patchBody = {userAcceptedPendingOrder: (result[0].userAcceptedPendingOrder || 0) + 1, userPendingOrder: result[0].userPendingOrder - 1, userBalance: result[0].userBalance - updatedOrderModel.orderPrice};
+                if(this.options.isOrderCompleted) patchBody = {userOrderCompletion: (result[0].userOrderCompletion || 0) + 1, userAcceptedPendingOrder: result[0].userAcceptedPendingOrder -1};
+                this.updateExistingModel({model: WorkerModel, body: patchBody}).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                })
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    };
+
     // Admin and worker both can accept the order!
     _updateWorkerOrder(){
         return new Promise((resolve, reject) => {
             this._isWorkerHasBalance({workerPartner: this.options.workerPartner, orderId: this.parseMongooseId()}).then((res) => {
                 if(res.isWorkerHasBal){
-                    this.orderImpl._updateOrder({getUpdatedModel: true}).then((updatedModel) => {
-                        if(this.options.isOrderAccepted){
-                            const additionalQuery = {};
-                            additionalQuery['_id'] = this.options.workerPartner;
-                            this._listWorkers(additionalQuery).then((result) => {
-                                this.options.selectedNodes = JSON.stringify(this.options.workerPartner);
-                                this.updateExistingModel({model: WorkerModel, body: {userAcceptedPendingOrder: (result[0].userAcceptedPendingOrder || 0) + 1, userPendingOrder: result[0].userPendingOrder - 1, userBalance: result[0].userBalance - updatedModel.orderPrice}}).then((result) => {
-                                    resolve(result);
-                                }).catch((err) => {
-                                    reject(err);
-                                })
+                    this.orderImpl._updateOrder({getUpdatedModel: true}).then((updatedOrderModel) => {
+                        if(this.options.isOrderAccepted || this.options.isOrderCompleted){
+                            this._updateWorkerTaskState(updatedOrderModel).then((result) => {
+                                resolve(result);
                             }).catch((err) => {
-                                reject(err);
+                               reject(err);
                             });
                         }
                     }).catch((err) => {
