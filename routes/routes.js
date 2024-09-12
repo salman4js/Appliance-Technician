@@ -29,6 +29,12 @@ async function Initiator(options, method){
     }
 }
 
+// Authentication routes!
+Router.post("/:repoName/login-user", (req, res, next) => Initiator({req, res, next}, "POST"));
+
+// Widgets based routes!
+Router.get("/:repoName/widgets-list",  (req, res, next) => Initiator({req, res, next}, "GET"));
+
 // Admin read routes!
 Router.get("/:repoName/get-admins-info",
     (req, res, next) => Initiator({req, res, next}, "GET"));

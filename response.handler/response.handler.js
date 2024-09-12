@@ -110,19 +110,19 @@ class ResponseHandler {
     };
 
     isUniqueConstraintError(options) {
-        return options.err.code && options.err.code === ResponseHandler.ErrorCodes.UNIQUE_CONSTRAINT;
+        return options.err && options.err.code && options.err.code === ResponseHandler.ErrorCodes.UNIQUE_CONSTRAINT;
     };
 
     isValidationError(options) {
-        return options.err.name === ResponseHandler.ErrorCodes.VALIDATION_ERROR;
+        return options.err && options.err.name === ResponseHandler.ErrorCodes.VALIDATION_ERROR;
     };
 
     handleGenericError(options) {
         return {
             statusCode: 500,
-            message: lang.GenericError,
+            message: options.message || lang.GenericError,
             success: false,
-            err: options.err.message,
+            err: options?.err?.message,
         };
     };
 }

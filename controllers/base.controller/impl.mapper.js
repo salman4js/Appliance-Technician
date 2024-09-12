@@ -1,3 +1,4 @@
+const UserImpl = require('../../implementations/user.impl/user.impl');
 const AdminImpl = require('../../implementations/admin.impl/admin.impl');
 const WorkerImpl = require('../../implementations/worker.impl/worker.impl');
 
@@ -5,13 +6,15 @@ const ImplMapper = {
     POST: {
         admin: (options) => new AdminImpl(options)._createNewAdmin(),
         admin_new_worker: (options) => new AdminImpl(options)._createNewWorker(),
-        admin_new_order: (options) => new AdminImpl(options)._createNewOrder()
+        admin_new_order: (options) => new AdminImpl(options)._createNewOrder(),
+        login_user: (options) => new UserImpl(options)._authenticateUser()
     },
     GET: {
         admin: (options) => new AdminImpl(options)._listAllAdmins(),
         admin_worker: (options) => new AdminImpl(options)._listAllWorkers(),
         admin_order: (options) => new AdminImpl(options)._listAllOrders(),
-        worker_order: (options) => new WorkerImpl(options)._listWorkerOrders()
+        worker_order: (options) => new WorkerImpl(options)._listWorkerOrders(),
+        widgets: (options) => new UserImpl(options)._listOfUserWidgets()
     },
     PATCH: {
         admin: (options) => new AdminImpl(options)._updateAdminDetails(),
