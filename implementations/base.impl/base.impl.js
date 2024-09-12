@@ -7,10 +7,14 @@ class BaseImpl {
         this.options = options;
     };
 
+    parseMongooseId(){
+        return JSON.parse(this.options.selectedNodes).map(id => Mongoose.Types.ObjectId(id))
+    };
+
     prepareFilterQuery(additionalQuery){
         const filter = {};
         if(this.options.selectedNodes){
-            let selectedNodes = JSON.parse(this.options.selectedNodes).map(id => Mongoose.Types.ObjectId(id));
+            let selectedNodes = this.parseMongooseId();
             filter['_id'] = {$in: selectedNodes}
         }
         if(additionalQuery && !_.isEmpty(additionalQuery)){
@@ -47,7 +51,15 @@ class BaseImpl {
             const selectedNodes = JSON.parse(this.options.selectedNodes);
             if(selectedNodes && selectedNodes.length > 0){
                 options.model.updateMany({_id: selectedNodes}, options.body || this.options, {new: true}).then((updatedModel) => {
-                    resolve(updatedModel);
+                    if(options.getUpdatedModel === true && selectedNodes.length){
+                        options.model.findOne({_id: selectedNodes[0]}).then((updatedModel) => {
+                            resolve(updatedModel);
+                        }).catch((err) => {
+                           reject({err: err, message: BaseImplConstants.modelReadError});
+                        });
+                    } else {
+                        resolve(updatedModel);
+                    }
                 }).catch((err) => {
                     reject({nptUpdated: true, err: err, message: BaseImplConstants.modelGenericError})
                 });

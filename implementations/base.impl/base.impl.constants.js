@@ -9,6 +9,9 @@ const BaseImplConstants = {
         missingAdminId: 'Missing Admin ID',
         superAdminNeeded: 'Logged in user is not super admin to perform this operation'
     },
+    modelReadError: {
+        cannotRead: 'Cannot read for the requested nodes'
+    },
     modelDeleteError: {
         cannotDelete: 'Selected Node cannot be deleted!'
     }

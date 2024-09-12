@@ -128,8 +128,8 @@ class AdminImpl extends BaseImpl {
         if(this.options.adminId){
             additionalQuery['adminId'] = this.options.adminId;
         }
-        if(this.options.workerId){
-            additionalQuery['_id'] = this.options.workerId;
+        if(this.options.workerPartner){
+            additionalQuery['_id'] = this.options.workerPartner;
         }
         return new Promise((resolve, reject) => {
            this.workerImpl._listWorkers(additionalQuery).then((result) => {
@@ -145,10 +145,10 @@ class AdminImpl extends BaseImpl {
        if(this.options.adminId){
            additionalQuery['adminId'] = this.options.adminId;
        }
-       if(this.options.workerId){
-           additionalQuery['workerPartner'] = this.options.workerId;
+       if(this.options.workerPartner){
+           additionalQuery['workerPartner'] = this.options.workerPartner;
        }
-       await this.orderImpl._listOrders(additionalQuery);
+       return await this.orderImpl._listOrders(additionalQuery);
     };
 
     async _deleteOrder(){

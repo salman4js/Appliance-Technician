@@ -44,9 +44,9 @@ class OrderImpl extends BaseImpl {
         });
     };
 
-    _updateOrder(){
+    _updateOrder(options){
         return new Promise((resolve, reject) => {
-            this.updateExistingModel({model: WorkerOrderModel}).then((result) => {
+            this.updateExistingModel({model: WorkerOrderModel, getUpdatedModel: options.getUpdatedModel}).then((result) => {
                 resolve(result);
             }).catch((err) => {
                 reject({notUpdated: true, message: BaseImplConstants.modelPatchError.cannotUpdate, err: err});
