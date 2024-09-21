@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const BaseImpl = require('../base.impl/base.impl');
 const UserModel = require('../../models/user.model/user.model');
-const AuthImplConstants = require('./user.impl.constants');
+const UserImplConstants = require('./user.impl.constants');
 
 class UserImpl extends BaseImpl {
     constructor(options) {
@@ -16,12 +16,14 @@ class UserImpl extends BaseImpl {
                 .then((user) => {
                     if(_.isArray(user) && user.length > 0){
                         if(user[0].password === this.options.password){
-                            resolve({isLoggedIn: true, loggedInUserId: user[0]._id, loggedInUserRole: user[0].userRole});
+                            const resp = {isLoggedIn: true, loggedInUserId: user[0]._id, loggedInUserRole: user[0].userRole};
+                            if(resp.loggedInUserRole === 'worker') resp['loggedInWorkerId'] = user[0].workerId[0];
+                            resolve(resp);
                         } else {
-                            resolve(AuthImplConstants.invalidCredentials);
+                            resolve({notCreated: true, message: UserImplConstants.invalidCredentials, statusCode: 401});
                         }
                     } else {
-                        resolve(AuthImplConstants.noUserFound);
+                        resolve({notCreated: true, message: UserImplConstants.noUserFound, statusCode: 401});
                     }
                 }).catch((err) => {
                     reject(err);
@@ -32,10 +34,20 @@ class UserImpl extends BaseImpl {
     _listOfUserWidgets(){
         return new Promise((resolve, reject) => {
             if(this.options.userRole){
-                resolve(AuthImplConstants.userWidgets[this.options.userRole]);
+                resolve(UserImplConstants.userWidgets[this.options.userRole]);
             } else {
-                reject({message: AuthImplConstants.missingUserRole});
+                reject({message: UserImplConstants.missingUserRole});
             }
+        });
+    };
+
+    _getFormDialog(){
+        return new Promise((resolve, reject) => {
+           if(this.options.widget){
+                resolve(UserImplConstants.formDialog[this.options.widget]);
+           } else {
+               reject({message: UserImplConstants.missingWidgetInfo});
+           }
         });
     };
 }

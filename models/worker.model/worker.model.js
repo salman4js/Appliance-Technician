@@ -1,9 +1,6 @@
 const Mongoose = require('mongoose');
 
 const WorkerModel = new Mongoose.Schema({
-    userName: {type: String, unique: true, required: true},
-    password: {type: String, required: true},
-    userRole: {type: String, required: true}, // worker
     userBalance: {type: Number, required: true},
     userOrderCompletion: {type: Number, default: 0},
     userPendingOrder: {type: Number, default: 0},

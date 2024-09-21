@@ -7,8 +7,16 @@ class BaseImpl {
         this.options = options;
     };
 
+    _generateNewMongooseId(){
+        return new Mongoose.Types.ObjectId();
+    };
+
     parseMongooseId(){
         return JSON.parse(this.options.selectedNodes).map(id => Mongoose.Types.ObjectId(id))
+    };
+
+    deParseMongooseId(id){
+        return JSON.stringify([id || this.options.selectedNodes]);
     };
 
     prepareFilterQuery(additionalQuery){
@@ -28,6 +36,7 @@ class BaseImpl {
     addNewModel(options){
         return new Promise((resolve, reject) => {
            const model = new options.model(this.options);
+           options.customOperation && options.customOperation(model);
            model.save().then(() => {
                resolve(model);
            }).catch((err) => {
@@ -90,12 +99,11 @@ class BaseImpl {
 
     deleteModels(options){
         return new Promise((resolve, reject) => {
-            const deleteFilter = {};
+            const deleteFilter = options.deleteFilter || {};
             if(this.options.selectedNodes){
-                let selectedNodes = JSON.parse(this.options.selectedNodes).map(id => Mongoose.Types.ObjectId(id));
-                deleteFilter['_id'] = {$in: selectedNodes}
+                deleteFilter['_id'] = this.parseMongooseId()[0]
             }
-            options.model.deleteMany(deleteFilter._id, {new: true}).then((result) => {
+            options.model.deleteOne({_id: deleteFilter._id}, {new: true}).then((result) => {
                 resolve(result)
             }).catch((err) => {
                reject({notDeleted: true, message: BaseImplConstants.modelGenericError, err: err});

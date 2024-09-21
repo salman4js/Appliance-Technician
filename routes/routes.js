@@ -36,20 +36,18 @@ Router.post("/:repoName/login-user", (req, res, next) => Initiator({req, res, ne
 Router.get("/:repoName/widgets-list",  (req, res, next) => Initiator({req, res, next}, "GET"));
 
 // Admin read routes!
-Router.get("/:repoName/get-admins-info",
+Router.get("/:repoName/get-repo-info",
     (req, res, next) => Initiator({req, res, next}, "GET"));
-
-Router.get("/:repoName/get-admins-worker-info",
-    (req, res, next) => Initiator({req, res, next}, "GET"));
-
-Router.get("/:repoName/get-admins-orders-info",
-    (req, res,next) => Initiator({req, res, next}, "GET"));
 
 // Worker read routes!
 Router.get("/:repoName/get-worker-orders",
     (req, res, next) => Initiator({req, res, next}, "GET"));
 
 // Admin creation routes!
+
+Router.post("/:repoName/create-super-admin",
+    (req, res, next) => Initiator({req, res, next}, "POST"));
+
 Router.post("/:repoName/create-admin",
     (req, res, next) => Initiator({req, res, next}, "POST"));
 
@@ -75,5 +73,10 @@ Router.delete("/:repoName/admin-delete-order",
 
 Router.delete("/:repoName/admin-delete-non-admin",
     (req, res, next) => Initiator({req, res, next}, "DELETE"));
+
+Router.delete("/:repoName/admin-delete-worker",  (req, res, next) => Initiator({req, res, next}, "DELETE"));
+
+// Widget specific form dialog!
+Router.get("/:repoName/properties-form-dialog", (req, res, next) => Initiator({req, res, next}, "GET"));
 
 module.exports = Router;

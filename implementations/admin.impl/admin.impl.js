@@ -1,15 +1,32 @@
+const _ = require('lodash');
 const UserModel = require('../../models/user.model/user.model');
 const WorkerModel = require('../../models/worker.model/worker.model');
 const BaseImpl = require('../base.impl/base.impl');
 const OrderImpl = require('../order.impl/order.impl');
 const WorkerImpl = require('../worker.impl/worker.impl');
 const BaseImplConstants = require("../base.impl/base.impl.constants");
+const AdminImplConstants = require('./admin.impl.constants');
 
 class AdminImpl extends BaseImpl {
     constructor(options) {
         super(options);
         this.workerImpl = new WorkerImpl(options);
         this.orderImpl = new OrderImpl(options);
+    };
+
+    _createNewSuperAdmin(){
+        return new Promise((resolve, reject) => {
+            if(this.options.userRole === 'superAdmin'){
+                this.options.adminId = this._generateNewMongooseId();
+                this.addNewModel({model: UserModel}).then((userModel) => {
+                    resolve(userModel);
+                }).catch((err) => {
+                    reject(err);
+                })
+            } else {
+                resolve({notCreated: true, message: AdminImplConstants.superAdminNeeded});
+            }
+        });
     };
 
     _isSuperAdmin(){
@@ -29,8 +46,9 @@ class AdminImpl extends BaseImpl {
             const self = this;
 
             function createNewAdmin(){
-                self.addNewModel({model: UserModel}).then((newlyCreatedModel) => {
-                    resolve(newlyCreatedModel);
+                self.options.adminId = self._generateNewMongooseId();
+                self.addNewModel({model: UserModel}).then((userModel) => {
+                    resolve(userModel);
                 }).catch((err) => {
                     reject(err);
                 })
@@ -71,11 +89,7 @@ class AdminImpl extends BaseImpl {
         return new Promise((resolve, reject) => {
             if(this.options.adminId){
                 this.workerImpl._createNewWorker().then((newlyCreatedWorkerModel) => {
-                    this.pushIntoParentModel({parentModelFindKey: {_id: this.options.adminId}, parentModel: UserModel, model: newlyCreatedWorkerModel, parentKey: 'workers'}).then(() => {
-                        resolve(newlyCreatedWorkerModel);
-                    }).catch((err) => {
-                        reject(err);
-                    });
+                    resolve(newlyCreatedWorkerModel);
                 }).catch((err) => {
                     reject(err);
                 })
@@ -112,6 +126,9 @@ class AdminImpl extends BaseImpl {
 
     _listAllAdmins(additionalQuery){
         additionalQuery = additionalQuery || {};
+        additionalQuery['userRole'] = {
+            $in: ['superAdmin', 'admin']
+        };
         return new Promise((resolve, reject) => {
             this.getAllModels({model: UserModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
                 .then((result) => {
@@ -179,11 +196,12 @@ class AdminImpl extends BaseImpl {
             const additionalQuery = {};
             // Check if the worker has any unfinished business task, if yes, don't allow the worker model to be deleted!
             if(this.options.selectedNodes){
-                additionalQuery['_id'] = this.options.selectedNodes;
+                additionalQuery['userId'] = this.parseMongooseId()[0];
+                delete this.options.selectedNodes;
             }
             this.workerImpl._isWorkerHasPendingTasks(additionalQuery).then((isWorkerHasPendingTasks) => {
                if(!isWorkerHasPendingTasks){
-                   this.workerImpl._deleteWorker().then((result) => {
+                   this.workerImpl._deleteWorker(additionalQuery).then((result) => {
                        resolve(result);
                    }).catch((err) => {
                        reject(err);
@@ -191,7 +209,9 @@ class AdminImpl extends BaseImpl {
                } else {
                    resolve({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete});
                }
-            });
+            }).catch((err) => {
+                reject(err);
+            })
         });
     };
 }

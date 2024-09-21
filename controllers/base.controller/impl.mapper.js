@@ -4,9 +4,10 @@ const WorkerImpl = require('../../implementations/worker.impl/worker.impl');
 
 const ImplMapper = {
     POST: {
+        superAdmin: (options) => new AdminImpl(options)._createNewSuperAdmin(),
         admin: (options) => new AdminImpl(options)._createNewAdmin(),
-        admin_new_worker: (options) => new AdminImpl(options)._createNewWorker(),
-        admin_new_order: (options) => new AdminImpl(options)._createNewOrder(),
+        admin_worker: (options) => new AdminImpl(options)._createNewWorker(),
+        admin_order: (options) => new AdminImpl(options)._createNewOrder(),
         login_user: (options) => new UserImpl(options)._authenticateUser()
     },
     GET: {
@@ -14,7 +15,8 @@ const ImplMapper = {
         admin_worker: (options) => new AdminImpl(options)._listAllWorkers(),
         admin_order: (options) => new AdminImpl(options)._listAllOrders(),
         worker_order: (options) => new WorkerImpl(options)._listWorkerOrders(),
-        widgets: (options) => new UserImpl(options)._listOfUserWidgets()
+        widgets: (options) => new UserImpl(options)._listOfUserWidgets(),
+        properties_form: (options) => new UserImpl(options)._getFormDialog()
     },
     PATCH: {
         admin: (options) => new AdminImpl(options)._updateAdminDetails(),

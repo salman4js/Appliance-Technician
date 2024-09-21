@@ -10,11 +10,14 @@ class CreateController extends BaseController {
         this.options.implOptions = this.options.request?.body;
         this._addParamsInImplOptions();
         this._initiateAction().then((result) => {
-            if(!result?.notCreated){
-                this.responseHandler.parser(this.options.response, {statusCode: 201, result: result, success: true});
+            let response, statusCode = result?.statusCode;
+            delete result?.statusCode;
+            if(!result.notCreated){
+                response = {statusCode: statusCode || 201, result: result, success: true};
             } else {
-                this.responseHandler.parser(this.options.response, {statusCode: 400, message: result.message, success: false});
+                response = {statusCode: statusCode || 400, message: result.message, success: true};
             }
+            this.responseHandler.parser(this.options.response, response);
         }).catch((error) => {
             this.responseHandler.parser(this.options.response, {statusCode: 500, message: error.message, success: false, err: error.err, controllerLang: lang});
         });
