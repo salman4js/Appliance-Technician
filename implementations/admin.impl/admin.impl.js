@@ -65,7 +65,7 @@ class AdminImpl extends BaseImpl {
                     reject(err);
                 });
             } else {
-                if(this.options.userRole === 'superAdmin'){
+                if(this.options.userRoleQuery === 'superAdmin'){
                     createNewAdmin();
                 } else {
                     resolve({notCreated: true, message: BaseImplConstants.modelCreateError.superAdminNeeded})
@@ -183,7 +183,7 @@ class AdminImpl extends BaseImpl {
                        reject(err);
                    });
                } else {
-                   resolve({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete});
+                   resolve({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete, statusCode: 403});
                }
            }).catch((err) => {
                reject({notDeleted: true, message: BaseImplConstants.modelDeleteError.cannotDelete, err: err});

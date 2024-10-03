@@ -21,7 +21,11 @@ class BaseController {
     _addParamsInImplOptions(){
         if(!this.options.implOptions) this.options.implOptions = {};
         Object.keys(this.options.request.query).forEach((query) => {
-            this.options.implOptions[query] = this.options.request.query[query];
+            if(this.options.implOptions[query]){
+                this.options.implOptions[query + "Query"] = this.options.request.query[query];
+            } else {
+                this.options.implOptions[query] = this.options.request.query[query];
+            }
         });
         Object.keys(this.options.request.params).forEach((param) => {
             this.options.implOptions[param] = this.options.request.params[param];

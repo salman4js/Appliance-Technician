@@ -224,6 +224,47 @@ const UserImplConstants = {
                 }
             }
         ],
+        admin: [
+            {
+                attribute: 'textField',
+                value: undefined,
+                placeholder: 'Admin Name',
+                name: 'userName',
+                width: '100%',
+                isRequired: true,
+                inlineToast:{
+                    isShow: false,
+                    inlineToastColor: 'red',
+                    inlineMessage: 'Admin user name is required'
+                }
+            },
+            {
+                attribute: 'textField',
+                value: undefined,
+                placeholder: 'Admin Password',
+                name: 'password',
+                width: '100%',
+                isRequired: true,
+                inlineToast:{
+                    isShow: false,
+                    inlineToastColor: 'red',
+                    inlineMessage: 'Admin password is required'
+                }
+            },
+            {
+                attribute: 'listField',
+                value: undefined,
+                placeholder: 'Select User Role',
+                name: 'userRole',
+                options: [{
+                    value: 'Super Admin',
+                    actualValue: 'superAdmin'
+                }, {
+                    value: 'Admin',
+                    actualValue: 'admin'
+                }]
+            }
+        ]
     },
     missingUserRole: 'User role is missing.',
     missingWidgetInfo: 'Widget information is missing.'

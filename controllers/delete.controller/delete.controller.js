@@ -10,11 +10,14 @@ class DeleteController extends BaseController {
         this.options.implOptions = this.options.request.body;
         this._addParamsInImplOptions();
         this._initiateAction().then((result) => {
-            if(!result?.notDeleted){
-                this.responseHandler.parser(this.options.response, {statusCode: 204})
+            let response, statusCode = result?.statusCode;
+            delete result?.statusCode;
+            if(!result.notDeleted){
+                response = {statusCode: statusCode || 204};
             } else {
-                this.responseHandler.parser(this.options.response, {statusCode: 200, message: result.message, success: false});
+                response = {statusCode: statusCode || 200, message: result.message, success: false};
             }
+            this.responseHandler.parser(this.options.response, response);
         }).catch((error) => {
             this.responseHandler.parser(this.options.response, {statusCode: 500, message: error.message, success: false, err: error.err, controllerLang: lang});
         });
