@@ -129,6 +129,12 @@ class AdminImpl extends BaseImpl {
         additionalQuery['userRole'] = {
             $in: ['superAdmin', 'admin']
         };
+        if(this.options.userName){
+            additionalQuery['userName'] = {
+                $regex: '.*' + this.options.userName + '.*',
+                $options: 'i'
+            }
+        }
         return new Promise((resolve, reject) => {
             this.getAllModels({model: UserModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
                 .then((result) => {
@@ -147,6 +153,12 @@ class AdminImpl extends BaseImpl {
         }
         if(this.options.workerPartner){
             additionalQuery['_id'] = this.options.workerPartner;
+        }
+        if(this.options.userName){
+            additionalQuery['userName'] = {
+                $regex: '.*' + this.options.userName + '.*',
+                $options : 'i'
+            }
         }
         return new Promise((resolve, reject) => {
            this.workerImpl._listWorkers(additionalQuery).then((result) => {

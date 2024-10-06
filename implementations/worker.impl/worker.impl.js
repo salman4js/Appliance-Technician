@@ -63,23 +63,26 @@ class WorkerImpl extends BaseImpl {
 
     _listWorkers(additionalQuery){
         return new Promise((resolve, reject) => {
-            this.getAllModels({model: WorkerModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
-                .then((workersModel) => {
-                    const workersId = [];
-                    workersModel.map((workerModel) => {
-                        workersId.push(workerModel._id);
-                    });
-                    additionalQuery['workerId'] = {$in: workersId};
-                    delete additionalQuery.adminId;
-                    this.getAllModels({model: UserModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery}).then((userModel) => {
-                        resolve(_.zipWith(workersModel, userModel, function(obj1, obj2){
+            additionalQuery['userRole'] = 'worker';
+            this.getAllModels({model: UserModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery}).then((usersModel) => {
+                const workersId = [];
+                usersModel.map((userModel) => {
+                    workersId.push(userModel.workerId[0])
+                });
+                additionalQuery['_id'] = {$in: workersId};
+                delete additionalQuery.adminId;
+                delete additionalQuery.userRole;
+                delete additionalQuery.userName;
+                this.getAllModels({model: WorkerModel, filterQuery: (query) => this.prepareFilterQuery(query), additionalQuery})
+                    .then((workersModel) => {
+                        resolve(_.zipWith(workersModel, usersModel, function(obj1, obj2){
                             return _.merge({}, obj1, obj2)
                         }));
                     }).catch((err) => {
-                        reject(err);
-                    });
-                }).catch((err) => {
-                reject({message: BaseImplConstants.modelGenericError, err: err});
+                    reject({message: BaseImplConstants.modelGenericError, err: err});
+                });
+            }).catch((err) => {
+                reject(err);
             });
         });
     };
